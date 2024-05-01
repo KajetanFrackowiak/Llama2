@@ -16,7 +16,7 @@ class LLaMA:
         self.args = model_args
 
     @staticmethod
-    def build(checkpoints_dir: str, tokenizer_path: str, load_model: bool, max_seq_len: int, max_batch_size: int, device: str):
+    def build(checkpoints_dir: str, tokenizer_path: str, load_model: bool, max_seq_len: int, max_batch_size: int, device: Optional[str] = None):
         prev_time = time.time()
         if load_model:
             checkpoints = sorted(Path(checkpoints_dir).glob("*.pth"))
@@ -27,7 +27,7 @@ class LLaMA:
             print(f"Loaded checkpoint in {time.time() - prev_time:.2f}s")
             prev_time = time.time()
         with open(Path(checkpoints_dir) / "params.json", "r") as f:
-            params = json.loads(f.read())
+            params = json.load(f)
 
         model_args: ModelArgs = ModelArgs(
             max_seq_len=max_seq_len,
@@ -41,9 +41,9 @@ class LLaMA:
         model_args.vocab_size = tokenizer.vocab_size()
         
         if device == "cuda":
-            torch.set_default_tensor_type(torch.cuda.HalfTensor)
+            torch.set_default_dtype(torch.float16)
         else:
-            torch.set_default_tensor_type(torch.BFloat16Tensor)
+            torch.set_default_dtype(torch.float32)
         
         model = Transformer(model_args).to(device)
 
@@ -60,6 +60,7 @@ class LLaMA:
             max_gen_len = self.args.max_seq_len - 1
         # Convert each prompt into tokens
         prompt_tokens = [self.tokenizer.encode(prompt, out_type=int, add_bos=True, add_eos=False) for prompt in prompts]
+        # prompt_tokens = [torch.tensor(t, dtype=torch.long, device=device) for t in prompt_tokens]
         # Make sure the batch size is not too large
         batch_size = len(prompt_tokens)
         assert batch_size <= self.args.max_batch_size, f"batch size must be less than or equal to {self.args.max_batch_size}"
@@ -131,12 +132,13 @@ class LLaMA:
 if __name__ == "__main__":
     torch.manual_seed(0)
 
-    allow_cuda = True
+    allow_cuda = False
     device = 'cuda' if torch.cuda.is_available() and allow_cuda else 'cpu'
-
+     
     prompts = [
-        "Simply put, the theory of relativity states that ",
+        'How does the act of observing a quantum system cause its wavefunction to "collapse" into a definite state?',
     ]
+    
     model = LLaMA.build(
         checkpoints_dir='llama-2-7b',
         tokenizer_path='tokenizer.model',
