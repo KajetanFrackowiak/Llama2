@@ -1,0 +1,9 @@
+name: base
+channels:
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.10
+  - pytorch
+  - sentencepiece
+  - tqdm
