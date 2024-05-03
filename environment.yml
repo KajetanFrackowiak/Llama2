@@ -4,6 +4,6 @@ channels:
   - defaults
 dependencies:
   - python=3.10
-  - pytorch
+  - torch
   - sentencepiece
   - tqdm
