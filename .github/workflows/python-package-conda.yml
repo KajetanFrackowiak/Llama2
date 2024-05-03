@@ -26,7 +26,7 @@ jobs:
     
     - name: Install dependencies
       run: |
-        CONDA_NO_PLUGINS=true conda env update --file environment.yml --name environment.yml
+        CONDA_NO_PLUGINS=true conda env update --file environment.yml --name environment.yml --solver classic
     
     - name: Lint with flake8
       run: |
